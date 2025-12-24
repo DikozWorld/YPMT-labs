@@ -5,19 +5,16 @@
 
 using namespace std;
 
-// Constructor
 Parser::Parser(const vector<Token>& tokenList)
     : tokens(tokenList), currentPos(0), root(nullptr), errorFlag(false) {
 }
 
-// Destructor
 Parser::~Parser() {
     if (root) {
         delete root;
     }
 }
 
-// Get current token
 Token Parser::currentToken() const {
     if (currentPos < tokens.size()) {
         return tokens[currentPos];
@@ -25,7 +22,6 @@ Token Parser::currentToken() const {
     return { TOKEN_END, 0 };
 }
 
-// Peek next token
 Token Parser::peekToken() const {
     if (currentPos + 1 < tokens.size()) {
         return tokens[currentPos + 1];
@@ -33,19 +29,17 @@ Token Parser::peekToken() const {
     return { TOKEN_END, 0 };
 }
 
-// Consume current token
 void Parser::consumeToken() {
     if (currentPos < tokens.size()) {
         currentPos++;
     }
 }
 
-// Match and consume token
 void Parser::match(TokenTypeEnum expectedType, int expectedCode) {
     Token current = currentToken();
 
     if (current.type == TOKEN_END && expectedType == TOKEN_END) {
-        return; // End of program expected
+        return;
     }
 
     if (current.type != expectedType) {
@@ -79,7 +73,6 @@ void Parser::match(TokenTypeEnum expectedType, int expectedCode) {
     consumeToken();
 }
 
-// Error reporting
 void Parser::error(const string& message) {
     if (!errorFlag) {
         errorFlag = true;
@@ -87,11 +80,9 @@ void Parser::error(const string& message) {
     }
 }
 
-// Parse program (starting symbol S)
 bool Parser::parse() {
     root = parseS();
 
-    // Check if we've consumed all tokens
     if (currentToken().type != TOKEN_END) {
         error("expected end of program (#)");
     }
@@ -99,18 +90,14 @@ bool Parser::parse() {
     return !errorFlag;
 }
 
-// S -> do S{;S} while B | id = E | print id
 ParseTreeNode* Parser::parseS() {
     Token current = currentToken();
 
-    // Case 1: do S{;S} while B
     if (current.type == TOKEN_WORD && current.code == 1) { // do
         ParseTreeNode* doWhileNode = new ParseTreeNode(NODE_DO_WHILE, "do-while");
 
-        // Consume 'do'
         match(TOKEN_WORD, 1);
 
-        // Parse statement list inside do-while
         vector<ParseTreeNode*> statements = parseStatementList();
         if (statements.empty()) {
             error("S: expected statement after 'do'");
@@ -121,7 +108,6 @@ ParseTreeNode* Parser::parseS() {
             doWhileNode->children.push_back(stmt);
         }
 
-        // Check for 'while'
         if (currentToken().type == TOKEN_WORD && currentToken().code == 2) {
             match(TOKEN_WORD, 2); // while
         }
@@ -131,7 +117,6 @@ ParseTreeNode* Parser::parseS() {
             return nullptr;
         }
 
-        // Parse condition B
         ParseTreeNode* condition = parseB();
         if (condition) {
             doWhileNode->children.push_back(condition);
@@ -143,18 +128,15 @@ ParseTreeNode* Parser::parseS() {
 
         return doWhileNode;
     }
-    // Case 2: id = E
     else if (current.type == TOKEN_ID) {
         ParseTreeNode* assignNode = new ParseTreeNode(NODE_ASSIGNMENT, "=");
 
-        // Identifier
         ParseTreeNode* idNode = new ParseTreeNode(NODE_IDENTIFIER,
             to_string(current.code));
         assignNode->children.push_back(idNode);
 
         match(TOKEN_ID);
 
-        // Check for '='
         if (currentToken().type == TOKEN_WORD && currentToken().code == 4) {
             match(TOKEN_WORD, 4); // =
         }
@@ -164,7 +146,6 @@ ParseTreeNode* Parser::parseS() {
             return nullptr;
         }
 
-        // Parse expression E
         ParseTreeNode* expr = parseE();
         if (expr) {
             assignNode->children.push_back(expr);
@@ -176,13 +157,11 @@ ParseTreeNode* Parser::parseS() {
 
         return assignNode;
     }
-    // Case 3: print id
     else if (current.type == TOKEN_WORD && current.code == 3) { // print
         ParseTreeNode* printNode = new ParseTreeNode(NODE_PRINT, "print");
 
-        match(TOKEN_WORD, 3); // print
+        match(TOKEN_WORD, 3);
 
-        // Check for identifier
         if (currentToken().type == TOKEN_ID) {
             ParseTreeNode* idNode = new ParseTreeNode(NODE_IDENTIFIER,
                 to_string(currentToken().code));
@@ -203,46 +182,40 @@ ParseTreeNode* Parser::parseS() {
     }
 }
 
-// Parse multiple statements separated by semicolons
 vector<ParseTreeNode*> Parser::parseStatementList() {
     vector<ParseTreeNode*> statements;
 
-    // Parse first statement
     ParseTreeNode* stmt = parseS();
     if (stmt) {
         statements.push_back(stmt);
     }
     else {
-        return statements; // Return empty if error
+        return statements;
     }
 
-    // Parse additional statements separated by semicolons
     while (currentToken().type == TOKEN_WORD && currentToken().code == 9) { // ;
         match(TOKEN_WORD, 9); // ;
 
-        // Check if there's another statement (not mandatory before 'while')
         if (currentToken().type != TOKEN_WORD || currentToken().code != 2) { // not 'while'
             stmt = parseS();
             if (stmt) {
                 statements.push_back(stmt);
             }
             else {
-                break; // Error in statement
+                break;
             }
         }
         else {
-            break; // 'while' found, end of statement list
+            break;
         }
     }
 
     return statements;
 }
 
-// B -> E < E | E > E
 ParseTreeNode* Parser::parseB() {
     ParseTreeNode* comparisonNode = new ParseTreeNode(NODE_COMPARISON);
 
-    // Parse left expression E
     ParseTreeNode* leftExpr = parseE();
     if (!leftExpr) {
         error("B: expected expression");
@@ -251,7 +224,6 @@ ParseTreeNode* Parser::parseB() {
     }
     comparisonNode->children.push_back(leftExpr);
 
-    // Parse relational operator
     Token opToken = currentToken();
     if (opToken.type == TOKEN_WORD && opToken.code == 5) { // <
         comparisonNode->value = "<";
@@ -267,7 +239,6 @@ ParseTreeNode* Parser::parseB() {
         return nullptr;
     }
 
-    // Parse right expression E
     ParseTreeNode* rightExpr = parseE();
     if (!rightExpr) {
         error("B: expected expression after operator");
@@ -279,7 +250,6 @@ ParseTreeNode* Parser::parseB() {
     return comparisonNode;
 }
 
-// E -> T {+T | -T}
 ParseTreeNode* Parser::parseE() {
     ParseTreeNode* leftTerm = parseT();
     if (!leftTerm) {
@@ -287,15 +257,14 @@ ParseTreeNode* Parser::parseE() {
         return nullptr;
     }
 
-    // Handle additional +T or -T
     while (currentToken().type == TOKEN_WORD &&
-        (currentToken().code == 7 || currentToken().code == 8)) { // + or -
+        (currentToken().code == 7 || currentToken().code == 8)) {
 
         string opStr = (currentToken().code == 7) ? "+" : "-";
         ParseTreeNode* opNode = new ParseTreeNode(NODE_BINARY_OP, opStr);
         opNode->children.push_back(leftTerm);
 
-        match(TOKEN_WORD); // Consume + or -
+        match(TOKEN_WORD);
 
         ParseTreeNode* rightTerm = parseT();
         if (!rightTerm) {
@@ -311,18 +280,15 @@ ParseTreeNode* Parser::parseE() {
     return leftTerm;
 }
 
-// T -> num | id
 ParseTreeNode* Parser::parseT() {
     Token current = currentToken();
 
-    // Case 1: id
     if (current.type == TOKEN_ID) {
         ParseTreeNode* idNode = new ParseTreeNode(NODE_IDENTIFIER,
             to_string(current.code));
         match(TOKEN_ID);
         return idNode;
     }
-    // Case 2: num (constant)
     else if (current.type == TOKEN_DIG) {
         ParseTreeNode* constNode = new ParseTreeNode(NODE_CONSTANT,
             to_string(current.code));
@@ -335,16 +301,13 @@ ParseTreeNode* Parser::parseT() {
     }
 }
 
-// Print parse tree (recursive)
 void printTreeHelper(ParseTreeNode* node, int depth = 0) {
     if (!node) return;
 
-    // Indent based on depth
     for (int i = 0; i < depth; i++) {
         cout << "  ";
     }
 
-    // Print node type and value
     string typeStr;
     switch (node->type) {
     case NODE_PROGRAM: typeStr = "PROGRAM"; break;
@@ -366,7 +329,6 @@ void printTreeHelper(ParseTreeNode* node, int depth = 0) {
     }
     cout << "]" << endl;
 
-    // Print children
     for (auto child : node->children) {
         printTreeHelper(child, depth + 1);
     }
@@ -380,7 +342,6 @@ void Parser::printParseTree() const {
 
     cout << "\n=== PARSE TREE ===" << endl;
     printTreeHelper(root);
-    cout << "==================" << endl;
 }
 
 void Parser::printErrors() const {
