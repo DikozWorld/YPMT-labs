@@ -5,15 +5,10 @@
 
 using namespace std;
 
-// Function to demonstrate parser with examples from assignment
 void demonstrateParserExamples() {
     cout << "\n=== LABORATORY WORK 3: SYNTAX ANALYZER ===" << endl;
-    cout << "Examples of derivable and non-derivable strings:" << endl;
-    cout << "==============================================" << endl;
 
-    // Examples of derivable strings (should be accepted)
     vector<pair<string, string>> testCases = {
-        // Correct programs (should be accepted)
         {"do x = 10; print x while x < 20#", "accepted"},
         {"x = 5#", "accepted"},
         {"print y#", "accepted"},
@@ -23,7 +18,6 @@ void demonstrateParserExamples() {
         {"x = y + 15#", "accepted"},
         {"do print counter; counter = counter + 1 while counter < 10#", "accepted"},
 
-        // Incorrect programs (should NOT be accepted)
         {"do x = 10; print x while x <#", "Error: B: expected expression after operator"},
         {"do x = 10; print x while < 20#", "Error: B: expected expression"},
         {"x = #", "Error: E: expected term"},
@@ -42,12 +36,10 @@ void demonstrateParserExamples() {
         cout << "\nExample " << (i + 1) << ":" << endl;
         cout << "Program: \"" << testCases[i].first << "\"" << endl;
 
-        // Lexical analysis
         vector<Token> tokens = scanner(testCases[i].first);
         cout << "Tokens: ";
         print_tokens(tokens);
 
-        // Syntax analysis
         Parser parser(tokens);
         bool success = parser.parse();
 
@@ -67,14 +59,11 @@ void demonstrateParserExamples() {
                 parser.printErrors();
             }
         }
-        cout << "----------------------------------------" << endl;
     }
 }
 
-// Function to demonstrate recursive descent schemes
 void printRecursiveDescentSchemes() {
     cout << "\n=== RECURSIVE DESCENT PROCEDURE SCHEMES ===" << endl;
-    cout << "===========================================" << endl;
 
     cout << "\nPROCEDURE S SCHEME:" << endl;
     cout << "   IF current token = 'do' THEN" << endl;
@@ -120,21 +109,18 @@ void printRecursiveDescentSchemes() {
 int main() {
     initKeywords();
 
-    cout << "=== LABORATORY WORKS 1, 2 and 3 ===" << endl;
+    cout << "LABORATORY WORKS 1, 2 and 3" << endl;
     cout << "1. Information tables" << endl;
     cout << "2. Lexical analyzer (scanner)" << endl;
     cout << "3. Syntax analyzer (parser)" << endl;
-    cout << "==================================" << endl;
     cout << "Language grammar:" << endl;
     cout << "S → do S{;S} while B | id = E | print id" << endl;
     cout << "B → E < E | E > E" << endl;
     cout << "E → T {+T | -T}" << endl;
     cout << "T → num | id" << endl;
-    cout << "==================================" << endl;
     cout << endl;
 
-    // Part 1: Demonstration of tables (Lab 1)
-    cout << "=== PART 1: INFORMATION TABLES ===" << endl;
+    cout << "PART 1: INFORMATION TABLES" << endl;
 
     cout << "\n1. Keywords table:" << endl;
     cout << "   find_word(\"do\") = " << find_word("do") << endl;
@@ -156,39 +142,32 @@ int main() {
     cout << "   val_dig(1) = " << val_dig(1) << endl;
     cout << "   val_dig(2) = " << val_dig(2) << endl;
 
-    // Part 2: Demonstration of scanner (Lab 2)
-    cout << "\n\n=== PART 2: LEXICAL ANALYZER ===" << endl;
+    cout << "\n\nPART 2: LEXICAL ANALYZER" << endl;
 
-    // Example 1
     string program1 = "do x = 10; print x while x < 20#";
     cout << "\nExample 1: \"" << program1 << "\"" << endl;
     vector<Token> tokens1 = scanner(program1);
     cout << "Token vector: ";
     print_tokens(tokens1);
 
-    // Example 2
     string program2 = "do x = x + 5; y = 100; print y while y > 0#";
     cout << "\nExample 2: \"" << program2 << "\"" << endl;
     vector<Token> tokens2 = scanner(program2);
     cout << "Token vector: ";
     print_tokens(tokens2);
 
-    // Example 3
     string program3 = "a = 1 + 2 - 3#";
     cout << "\nExample 3: \"" << program3 << "\"" << endl;
     vector<Token> tokens3 = scanner(program3);
     cout << "Token vector: ";
     print_tokens(tokens3);
 
-    // Demonstration of token to source code correspondence
     cout << "\nToken to source code correspondence (Example 1):" << endl;
     demonstrate_token_correspondence(program1, tokens1);
 
-    // Scanner state diagram
     print_state_diagram();
 
-    // Display table contents
-    cout << "\n=== TABLE CONTENTS ===" << endl;
+    cout << "\nTABLE CONTENTS" << endl;
 
     cout << "\nIdentifiers table:" << endl;
     for (const auto& id : identifiers) {
@@ -200,14 +179,10 @@ int main() {
         cout << "  code " << cnst.first << " -> value " << cnst.second << endl;
     }
 
-    // Part 3: Recursive descent schemes (for report)
     printRecursiveDescentSchemes();
-
-    // Part 4: Demonstration of parser (Lab 3)
     demonstrateParserExamples();
 
-    // Additional interactive test
-    cout << "\n=== ADDITIONAL TEST ===" << endl;
+    cout << "\nADDITIONAL TEST" << endl;
     cout << "Enter a program to check (end with #):" << endl;
     cout << "Example: do x = 10; print x while x < 20#" << endl;
     cout << "Input: ";
@@ -215,19 +190,16 @@ int main() {
     string userProgram;
     getline(cin, userProgram);
 
-    // Make sure the string contains #
     if (userProgram.find('#') == string::npos) {
         userProgram += "#";
     }
 
     cout << "\nChecking program: \"" << userProgram << "\"" << endl;
 
-    // Lexical analysis
     vector<Token> userTokens = scanner(userProgram);
     cout << "Tokens: ";
     print_tokens(userTokens);
 
-    // Syntax analysis
     Parser userParser(userTokens);
     bool userSuccess = userParser.parse();
 
